@@ -1,33 +1,38 @@
 package com.sniffer.com;
 
-import java.text.SimpleDateFormat;
-
 import org.jnetpcap.packet.PcapPacket;
 import org.jnetpcap.packet.format.FormatUtils;
 import org.jnetpcap.protocol.lan.Ethernet;
-import org.jnetpcap.protocol.network.Arp;
 import org.jnetpcap.protocol.network.Ip4;
-import org.jnetpcap.protocol.tcpip.Tcp;
 import org.jnetpcap.protocol.tcpip.Udp;
 
+/*
+ * @TV Information
+ * IP	192.168.0.181
+ * MAC	14:C9:13:77:62:C1
+ * 
+ * Router
+ * MAC	10:BE:F5:1C:6B:70
+ * IP	192.168.0.1  
+ */
+
 public class PacketRunner extends Object implements Runnable {
+
+	private volatile boolean isRunning = true;
+	private boolean load = false;
 
 	String timestamp;
 	PcapPacket packet;
 	Ip4 ip2 = new Ip4();
-	Tcp tcp = new Tcp();
+	// Tcp tcp = new Tcp();
 	Udp udp = new Udp();
-	Arp arp = new Arp();
 
-	public PacketRunner(PcapPacket packet) {
+	// Arp arp = new Arp();
+
+	public PacketRunner(PcapPacket packet, String ts) {
 		try {
 			this.packet = packet;
-			packet.hasHeader(ip2);
-			packet.hasHeader(tcp);
-			packet.hasHeader(udp);
-			packet.hasHeader(arp);
-			timestamp = new SimpleDateFormat("yyyy-MM-DD HH:mm:ss.SSS")
-					.format(System.currentTimeMillis());
+			timestamp = ts;
 
 		} catch (Exception E) {
 			E.printStackTrace();
@@ -38,40 +43,64 @@ public class PacketRunner extends Object implements Runnable {
 	public void run() {
 		try {
 
-			// get ip address so we know its the TV
-		
-			String src = FormatUtils.ip(ip2.source()).toString();
-			String dst = FormatUtils.ip(ip2.destination()).toString();
+			while (isRunning) {
+				/*
+				 * IP level information
+				 */
+				Packet p = new Packet();
+				p.setTs(timestamp);
 
-			if (src.equals("192.168.0.181") || dst.equals("192.168.0.181")) {
-				System.out.printf(timestamp + ":: TV! header TTL=" + ip2.ttl()
-						+ " [src IP]=" + src + " [dst IP]=" + dst + " Size="
-						+ packet.getCaptureHeader().wirelen() + "\n");
+				if (packet.hasHeader(ip2)) {
+					if (FormatUtils.ip(ip2.source()).toString()
+							.equals("192.168.0.181")
+							|| FormatUtils.ip(ip2.destination()).toString()
+									.equals("192.168.0.181")) {
+						load = true;
+						p.setIp_source(FormatUtils.ip(ip2.source()).toString());
+						p.setIp_destination(FormatUtils.ip(ip2.destination())
+								.toString());
+						p.setIp_size(ip2.size());
+						p.setIp_payload(ip2.getPayloadLength());
 
+					} else
+						kill();
+				}
+
+				// if (packet.hasHeader(tcp)) {
+				// // TODO
+				//
+				// }
+
+				if (packet.hasHeader(udp)) {
+
+					Ethernet eth = new Ethernet();
+					packet.hasHeader(eth);
+					if (FormatUtils.mac(eth.destination()).equals(
+							"14:C9:13:77:62:C1")
+							|| FormatUtils.mac(eth.source()).equals(
+									"14:C9:13:77:62:C1")) {
+						load = true;
+						p.setEth_destination(FormatUtils.mac(eth.destination()));
+						p.setEth_source(FormatUtils.mac(eth.source()));
+						p.setEth_size(udp.size());
+						p.setEth_payload(eth.getPayloadLength());
+						p.setEth_type(eth.type());
+					} else
+						kill();
+				}
+				if(load) Sniffer.writePacket(p);
+				kill();
 			}
-
-			if (packet.hasHeader(udp)) {
-				System.out.printf("\n UDP Packet ");
-				System.out.println(udp.source() + " " + udp.destination() + " "
-						+ udp.getPayloadLength());
-				Ethernet eth = new Ethernet();
-				packet.hasHeader(eth);
-				dst = FormatUtils.mac(eth.destination());
-				src = FormatUtils.mac(eth.source());
-				String type = Integer.toHexString(eth.type());
-
-				System.out.println(src + " -> " + dst + ":" + type
-						+ " Eth tot pkts=[" + packet.size() + "]");
-
-			}
-			System.out.printf(timestamp + ":: TV! header TTL=" + ip2.ttl()
-					+ " [src IP]=" + src + " [dst IP]=" + dst + " Size="
-					+ packet.getCaptureHeader().wirelen() + "\n");
 
 		} catch (Exception E) {
 			E.printStackTrace();
 		}
 
+	}
+
+	public void kill() {
+		isRunning = false;
+		System.out.println("Thread Killed! ");
 	}
 
 }
