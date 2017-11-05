@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="create_run_jar" name="Create Runnable Jar for Project Sniffer">
+    <!--this file was created by Eclipse Runnable JAR Export Wizard-->
+    <!--ANT 1.7 is required                                        -->
+    <target name="create_run_jar">
+        <jar destfile="C:/Users/Bot/Documents/JavaLibs/sniffer.jar" filesetmanifest="mergewithoutmain">
+            <manifest>
+                <attribute name="Main-Class" value="com.sniffer.com.Sniffer"/>
+                <attribute name="Class-Path" value="."/>
+            </manifest>
+            <fileset dir="C:/Users/Bot/workspace/Sniffer/bin"/>
+            <zipfileset excludes="META-INF/*.SF" src="C:/Users/Bot/Documents/JavaLibs/jnetpcap-1.4.r1425/jnetpcap.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="C:/Users/Bot/Documents/JavaLibs/sqlite-jdbc-3.20.0.jar"/>
+        </jar>
+    </target>
+</project>

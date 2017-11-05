@@ -40,7 +40,7 @@ public class Sniffer {
 	 *            ignored
 	 */
 	static SimpleDateFormat sdf = new SimpleDateFormat(
-			"yyyy-MM-DD HH:mm:ss.SSS");
+			"yyyy-MM-dd HH:mm:ss.SSS");
 	static Connection conn;
 
 	@SuppressWarnings("deprecation")

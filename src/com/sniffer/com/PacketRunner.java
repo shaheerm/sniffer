@@ -48,7 +48,7 @@ public class PacketRunner extends Object implements Runnable {
 				 * IP level information
 				 */
 				Packet p = new Packet();
-				p.setTs(timestamp);
+				//p.setTs(timestamp);
 
 				if (packet.hasHeader(ip2)) {
 					if (FormatUtils.ip(ip2.source()).toString()
@@ -100,7 +100,7 @@ public class PacketRunner extends Object implements Runnable {
 
 	public void kill() {
 		isRunning = false;
-		System.out.println("Thread Killed! ");
+		//System.out.println("Thread Killed! ");
 	}
 
 }
